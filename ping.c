@@ -1,16 +1,16 @@
 #include "ping.h"
 #include <stdlib.h>
 
-int8 *evalicmp(icmp *pkt) {
-  int8 *p, *ret;
-  int16 size;
-  int16 check;
+uint8 *evalicmp(icmp *pkt) {
+  uint8 *p, *ret;
+  uint16 size;
+  uint16 check;
 
   struct s_rawicmp rawpkt;
   struct s_rawicmp *rawptr;
 
   if (!pkt || !pkt->data)
-    return $1 0;
+    return (uint8 *)0;
 
   switch (pkt->kind) {
   case echo:
@@ -24,7 +24,7 @@ int8 *evalicmp(icmp *pkt) {
 
     break;
   default:
-    return $1 0;
+    return (uint8 *)0;
     break;
   }
 
@@ -34,14 +34,15 @@ int8 *evalicmp(icmp *pkt) {
   // if size an odd number increase by 1, 16 bit boundary
   if (size % 2)
     size++;
-  p = $1 malloc($i size);
+
+  p = malloc((uint8)size);
   ret = p;
   assert(p);
-  zero($1 p, pkt->size);
+  zero((uint8 *)p, pkt->size);
   // memset($1 p, 0, pkt->size);
 
   // copy headers
-  copy(p, $1 & rawpkt, sizeof(struct s_icmp));
+  copy(p, (uint8 *)&rawpkt, sizeof(struct s_icmp));
   // copy data
   p += sizeof(struct s_rawicmp);
   copy(p, pkt->data, pkt->size);
@@ -53,11 +54,11 @@ int8 *evalicmp(icmp *pkt) {
   return ret;
 }
 
-void zero(int8 *p, int16 s) { memset($1 p, 0, s); }
+void zero(uint8 *p, uint16 s) { memset((uint8 *)p, 0, s); }
 
-void copy(int8 *dst, int8 *src, int16 size) {
-  int16 n;
-  int8 *sptr, *dptr;
+void copy(uint8 *dst, uint8 *src, uint16 size) {
+  uint16 n;
+  uint8 *sptr, *dptr;
 
   // while n !0 decrement
   for (dptr = dst, sptr = src, n = size; n; n--) {
@@ -68,9 +69,9 @@ void copy(int8 *dst, int8 *src, int16 size) {
   return;
 }
 
-void printhex(int8 *d, int16 s) {
+void printhex(uint8 *d, uint16 s) {
   for (int i = 0; i < s; i++) {
-    printf("%02X", *d++);
+    printf("%02x", *d++);
   }
 }
 
@@ -79,15 +80,15 @@ void showicmp(icmp *pkt) {
     return;
 
   printf("kind:\t %s\nsize:\t %d\n",
-         (pkt->kind == echo) ? "echo" : "echo reply", $1 pkt->size);
+         (pkt->kind == echo) ? "echo" : "echo reply", (uint8)pkt->size);
   if (pkt->data)
     // final arg is delimiter
     printhex(pkt->data, pkt->size);
   printf("\n");
 }
 
-icmp *mkicmp(type kind, const int8 *data, int16 size) {
-  int16 n;
+icmp *mkicmp(type kind, const uint8 *data, uint16 size) {
+  uint16 n;
   icmp *p;
 
   if (!data || !size) {
@@ -96,7 +97,7 @@ icmp *mkicmp(type kind, const int8 *data, int16 size) {
 
   // size of icmp struct headers + data
   n = sizeof(struct s_icmp) + size;
-  p = (icmp *)malloc($i n);
+  p = (icmp *)malloc((int)n);
   assert(p);
 
   memset(p, 0, sizeof(n));
@@ -104,21 +105,21 @@ icmp *mkicmp(type kind, const int8 *data, int16 size) {
   p->kind = kind;
   p->size = size;
   // is a pointer
-  p->data = $1 data;
+  p->data = (uint8 *)data;
 
   return p;
 }
 
-int16 checksum(int8 *pkt, int16 size) {
-  int16 *p;
-  int32 acc, b;
-  int16 carry;
-  int16 n;
-  int16 sum;
+uint16 checksum(uint8 *pkt, uint16 size) {
+  uint16 *p;
+  uint32 acc, b;
+  uint16 carry;
+  uint16 n;
+  uint16 sum;
 
   acc = 0;
 
-  for (n = size, p = (int16 *)pkt; n; n -= 2, p++) {
+  for (n = size, p = (uint16 *)pkt; n; n -= 2, p++) {
     b = *p;
     acc += b;
   }
@@ -131,19 +132,19 @@ int16 checksum(int8 *pkt, int16 size) {
 
 int main(int argc, char *argv[]) {
 
-  int8 *str;
-  int8 *raw;
+  uint8 *str;
+  uint8 *raw;
   icmp *pkt;
-  int16 size;
+  uint16 size;
 
   // includes null terminator
-  str = $1 malloc(6);
+  str = (uint8 *)malloc(6);
   assert(str);
-  zero(str, $2 6);
-  strncpy($c str, "Hello", 5);
+  zero(str, (uint16)6);
+  strncpy((char *)str, "Hello", 5);
 
   // 5 here cast to int16
-  pkt = mkicmp(echo, str, $2 5);
+  pkt = mkicmp(echo, str, (uint16)5);
   assert(pkt);
   showicmp(pkt);
 

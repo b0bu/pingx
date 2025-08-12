@@ -9,47 +9,39 @@
 
 #define packed __attribute__((packed))
 
-typedef unsigned char int8;
-typedef unsigned short int int16;
-typedef unsigned int int32;
-typedef unsigned long long int int64;
-
-#define $1 (int8 *)
-#define $2 (int16)
-#define $4 (int32)
-#define $8 (int64)
-#define $c (char *)
-#define $i (int)
+typedef unsigned char uint8;
+typedef unsigned short int uint16;
+typedef unsigned int uint32;
+typedef unsigned long long int uint64;
 
 enum e_type { unassigned, echo, echoreply };
 typedef enum e_type type;
 
 // intermediate structure
 struct s_rawicmp {
-  int8 type;
-  int8 code;
-  int16 checksum;
-  int8 data[];
+  uint8 type;
+  uint8 code;
+  uint16 checksum;
+  uint8 data[];
 } packed;
 
 // handle packets via this abstraction, convert them to rawicmp
 struct s_icmp {
   type kind;
-  int16 size;
-  int8 *data;
+  uint16 size;
+  uint8 *data;
 } packed;
 typedef struct s_icmp icmp;
 
-int16 checksum(int8 *, int16);
-
+uint16 checksum(uint8 *, uint16);
 
 int main(int, char **);
-void copy(int8 *, int8 *, int16);
+void copy(uint8 *, uint8 *, uint16);
 // icmp
-icmp *mkicmp(type, const int8 *, int16);
+icmp *mkicmp(type, const uint8 *, uint16);
 // convert to rawicmp struct, convert to serise of bytes
-int8 *evalicmp(icmp *);
+uint8 *evalicmp(icmp *);
 // for debug
 void showicmp(icmp*);
-void hexdump(int8*, int16);
-void zero(int8*, int16);
+void hexdump(uint8*, uint16);
+void zero(uint8*, uint16);
