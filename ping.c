@@ -2,11 +2,12 @@
 #include <stdlib.h>
 
 int8 *evalicmp(icmp *pkt) {
-  int8 *p;
+  int8 *p, *ret;
   int16 size;
   int16 check;
 
   struct s_rawicmp rawpkt;
+  struct s_rawicmp *rawptr;
 
   if (!pkt || !pkt->data)
     return $1 0;
@@ -29,23 +30,27 @@ int8 *evalicmp(icmp *pkt) {
 
   rawpkt.checksum = 0;
   size = sizeof(struct s_rawicmp) + pkt->size;
+
   // if size an odd number increase by 1, 16 bit boundary
   if (size % 2)
     size++;
   p = $1 malloc($i size);
+  ret = p;
   assert(p);
-  zero(p, pkt->size);
+  zero($1 p, pkt->size);
   // memset($1 p, 0, pkt->size);
 
-  // new mempry as int8*
   // copy headers
   copy(p, $1 & rawpkt, sizeof(struct s_icmp));
   // copy data
   p += sizeof(struct s_rawicmp);
   copy(p, pkt->data, pkt->size);
 
-  // 47:00
-  return 0;
+  check = checksum(ret, size);
+  rawptr = (struct s_rawicmp *)ret;
+  rawptr->checksum = check;
+
+  return ret;
 }
 
 void zero(int8 *p, int16 s) { memset($1 p, 0, s); }
@@ -99,7 +104,7 @@ icmp *mkicmp(type kind, const int8 *data, int16 size) {
   p->kind = kind;
   p->size = size;
   // is a pointer
-  p->data = data;
+  p->data = $1 data;
 
   return p;
 }
